@@ -1,67 +1,69 @@
 import QtQuick 2.15
 
 Item {
-
+    id:root
     required property int mainWindw_wth
 
-    // 添加背景色 Rectangle，放在最顶部
-    Rectangle {
-        anchors.fill: parent
-        color: "#23272a" // 深青黑色背景
-        z: -1
-    }
-    
-    // 菜单数据模型
-    ListModel {
-        id: menuModel
-        ListElement { 
-            name: "菜单1" 
-            menuId: 1 
-        }
-        ListElement { 
-            name: "菜单2" 
-            menuId: 2 
-        }
-    }
-    
-    // 菜单1的内容数据模型
-    ListModel {
-        id: menu1Model
-        ListElement { 
-            name: "选项一" 
-            itemId: 1 
-        }
-        ListElement { 
-            name: "选项二" 
-            itemId: 2 
-        }
-        ListElement { 
-            name: "选项三" 
-            itemId: 3 
+    // 主题颜色配置
+    readonly property var themeColors: {
+        // 背景色系列
+        "background": {
+            "menuBar": "#efefef",           // 菜单选择栏背景
+            "content": "#cfcfcf",           // 子菜单内容区背景
+            "transparent": "transparent"     // 透明背景
+        },
+        // 交互色系列
+        "interactive": {
+            "hover": "#3498db",             // 鼠标悬停色
+            "selected": "#3498db",          // 选中状态色
+            "active": "#3498db"             // 激活状态色
+        },
+        // 文本色系列
+        "text": {
+            "primary": "black",             // 主要文本色
+            "secondary": "grey"            // 次要文本色
+        },
+        // 边框/分隔线色系列
+        "border": {
+            "light": "black",               // 浅色分隔线
+            "dark": "#34495e"               // 深色分隔线
         }
     }
-    
-    // 菜单2的内容数据模型
-    ListModel {
-        id: menu2Model
-        ListElement { 
-            name: "选项1"
-            itemId: 1 
+
+    // 菜单配置数据
+    property var menuConfig: [
+        {
+            menuId: 1,
+            name: "菜单1",
+            columns: 2,
+            itemHeight: 100,
+            items: [
+                { name: "选项一", itemId: 1 },
+                { name: "选项二", itemId: 2 },
+                { name: "选项三", itemId: 3 }
+            ]
+        },
+        {
+            menuId: 2,
+            name: "菜单2",
+            columns: 2,
+            itemHeight: 50,
+            items: [
+                { name: "选项1", itemId: 1 },
+                { name: "选项2", itemId: 2 },
+                { name: "选项3", itemId: 3 }
+            ]
         }
-        ListElement { 
-            name: "选项2"
-            itemId: 2 
-        }
-        ListElement { 
-            name: "选项3"
-            itemId: 3 
-        }
-    }
-    
+    ]
+
     // 当前展开的菜单（0表示都未展开）
     property int expandedMenuId: 0
     // 当前菜单展开状态 (0: 未展开, 1: 半展开, 2: 全展开)
     property int expandMode: 0
+    // 当前选中的子菜单
+    property int currentMenu: 1
+    // 当前选中的子菜单项
+    property int currentSelected: 0
 
     // 菜单选择栏
     Rectangle {
@@ -69,7 +71,7 @@ Item {
         width: 120
         height: parent.height
         anchors.right: rightContent.left
-        color: "#34495e"
+        color: themeColors.background.menuBar
         z: 10
 
         Column {
@@ -79,124 +81,110 @@ Item {
 
             Text {
                 text: "菜单选择"
-                color: "white"
+                color: themeColors.text.primary
                 font.pixelSize: 16
                 font.bold: true
                 padding: 10
             }
 
-            // 分隔线
             Rectangle {
                 width: parent.width
                 height: 1
-                color: "#2c3e50"
+                color: themeColors.border.light
             }
 
-            // 使用Repeater动态生成菜单选项
+            // 使用可复用的菜单项组件
             Repeater {
-                model: menuModel
-                delegate: Rectangle {
+                model: menuConfig
+                delegate: MenuBarItem {
                     width: parent.width
-                    height: 40
-                    color: menuMouseArea.containsMouse ? "#3498db" :
-                           (expandedMenuId === model.menuId ? "#3498db" : "transparent")
-                    radius: 3
+                    menuData: modelData
+                    isExpanded: expandedMenuId === modelData.menuId
+                    expandMode: root.expandMode
 
-                    Row {
-                        anchors.fill: parent
-                        spacing: 5
-
-                        // 展开/收起箭头
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: expandMode === 1 ? "◀" : ""
-                            color: "white"
-                            font.pixelSize: 12
-                            rightPadding: 10
-                        }
-
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: model.name
-                            color: "white"
-                            font.pixelSize: 14
-                            leftPadding: 10
-                        }
-
-                        // 展开/收起箭头
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: expandMode === 0 ? "" : "▶"
-                            color: "white"
-                            font.pixelSize: 12
-                            rightPadding: 10
-                        }
+                    onMenuClicked: {
+                        handleMenuClick(modelData.menuId)
                     }
 
-                    MouseArea {
-                        id: menuMouseArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-
-                        // 单击延迟确认定时器：到期才执行单击逻辑；双击时会被停止
-                        Timer {
-                            id: clickTimer
-                            interval: Qt.styleHints.mouseDoubleClickInterval
-                            running: false
-                            repeat: false
-                            onTriggered: {
-                                if (expandedMenuId === model.menuId && expandMode === 1) {
-                                    expandedMenuId = 0; // 收起
-                                    expandMode = 0;
-                                    console.log("触发单击效果：半展开到收起");
-                                } else if(expandedMenuId === 0 && expandMode === 0){
-                                    expandedMenuId = model.menuId; // 展开
-                                    expandMode = 1;
-                                    console.log("触发单击效果：收起 到半展开");
-                                }
-                                else if(expandedMenuId === model.menuId && expandMode === 2){
-                                    expandMode = 1;
-                                    console.log("触发单击效果：全展开到半展开");
-                                }
-                                else{ //同步选中菜单
-                                    expandedMenuId = model.menuId;
-                                    currentMenu = model.menuId;
-                                }
-                            }
-                        }
-
-                        onClicked: { // 单击：仅启动/重启定时器，延迟到期后才真正执行
-                            clickTimer.restart();
-                        }
-
-                        onDoubleClicked: { // 双击：先取消单击，再执行双击逻辑
-                            clickTimer.stop();
-                            if (expandedMenuId === model.menuId && expandMode === 2) {
-                                console.log("触发双击效果：全展开到收起");
-                                expandedMenuId = 0; // 收起
-                                expandMode = 0;
-                            } else {
-                                expandedMenuId = model.menuId; // 展开
-                                expandMode = 2;
-                                console.log("触发双击效果：收起/半展开到全展开");
-                                
-                            }
-                            currentMenu = model.menuId; // 确定当前选中的子菜单
-                        }
+                    onMenuDoubleClicked: {
+                        handleMenuDoubleClick(modelData.menuId)
                     }
                 }
             }
         }
     }
 
-    // 子菜单内容区域（根据选择显示不同子菜单）
-    // 只在有菜单展开时显示
+    // 可复用的菜单栏项组件
+    component MenuBarItem: Rectangle {
+        property var menuData
+        property bool isExpanded: false
+        property int expandMode: 0
+
+        signal menuClicked()
+        signal menuDoubleClicked()
+
+        height: 40
+        color: mouseArea.containsMouse ? themeColors.interactive.hover :
+               (isExpanded ? themeColors.interactive.selected : themeColors.background.transparent)
+        radius: 3
+
+        Row {
+            anchors.fill: parent
+            spacing: 5
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: expandMode === 1 ? "◀" : ""
+                color: themeColors.text.primary
+                font.pixelSize: 12
+                rightPadding: 10
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: menuData.name
+                color: themeColors.text.primary
+                font.pixelSize: 14
+                leftPadding: 10
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: expandMode === 0 ? "" : "▶"
+                color: themeColors.text.primary
+                font.pixelSize: 12
+                rightPadding: 10
+            }
+        }
+
+        MouseArea {
+            id: mouseArea
+            anchors.fill: parent
+            hoverEnabled: true
+
+            Timer {
+                id: clickTimer
+                interval: Qt.styleHints.mouseDoubleClickInterval
+                running: false
+                repeat: false
+                onTriggered: parent.parent.menuClicked()
+            }
+
+            onClicked: clickTimer.restart()
+            onDoubleClicked: {
+                clickTimer.stop()
+                parent.menuDoubleClicked()
+            }
+        }
+    }
+
+    // 子菜单内容区域
     Rectangle {
         id: rightContent
         width: expandedMenuId === 0 ? 0 : (expandMode === 1 ? 200 : mainWindw_wth - rightMenuBar.width)
         height: parent.height
         anchors.right: parent.right
-        color: "#2c3e50"
+        color: themeColors.background.content
         z: 10
         visible: expandedMenuId !== 0 && expandMode !== 0
         Behavior on width { NumberAnimation { duration: 150 } }
@@ -206,125 +194,132 @@ Item {
             anchors.margins: 10
             spacing: 10
 
-            // 菜单标题
             Text {
-                text: getMenuTitle(expandedMenuId)
-                color: "white"
+                text: getCurrentMenuData()?.name || "菜单"
+                color: themeColors.text.primary
                 font.pixelSize: 18
                 font.bold: true
                 padding: 15
             }
 
-            // 分隔线
             Rectangle {
                 width: parent.width
                 height: 1
-                color: "#34495e"
+                color: themeColors.border.dark
             }
 
-            // 子菜单内容区域
+            // 可复用的菜单内容组件
             Item {
                 width: parent.width
-                height: parent.height - 80 // 减去标题和分隔线的高度
+                height: parent.height - 80
 
-                // 菜单1内容（2列网格）
-                Grid {
-                    id: menuGrid
-                    visible: expandedMenuId === 1
-                    columns: 2
-                    columnSpacing: 10
-                    rowSpacing: 10
-                    width: parent.width
+                MenuContent {
+                    visible: expandedMenuId !== 0
+                    anchors.fill: parent
+                    menuData: getCurrentMenuData()
+                    currentSelected: root.currentSelected
 
-                    property real itemWidth: (width - columnSpacing) / 2
-
-                    // 使用Repeater动态生成菜单项
-                    Repeater {
-                        model: menu1Model
-                        delegate: Rectangle {
-                            width: menuGrid.itemWidth
-                            height: 50
-                            color: menuItemMouseArea.containsMouse ? "#3498db" :
-                                   (currentSelected === model.itemId ? "#3498db" : "transparent")
-                            radius: 5
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: model.name
-                                color: "white"
-                                font.pixelSize: 14
-                            }
-
-                            MouseArea {
-                                id: menuItemMouseArea
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                onClicked: {
-                                    currentSelected = model.itemId
-                                    console.log(model.name + "被点击")
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // 菜单2内容
-                Grid {
-                    id: menu2Grid
-                    visible: expandedMenuId === 2
-                    columns: 2
-                    columnSpacing: 10
-                    rowSpacing: 10
-                    width: parent.width
-
-                    property real itemWidth: (width - columnSpacing) / 2
-
-                    // 使用Repeater动态生成菜单项
-                    Repeater {
-                        model: menu2Model
-                        delegate: Rectangle {
-                            width: menu2Grid.itemWidth
-                            height: 50
-                            color: menu2ItemMouseArea.containsMouse ? "#3498db" :
-                                   (currentSelected === model.itemId ? "#3498db" : "transparent")
-                            radius: 5
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: model.name
-                                color: "white"
-                                font.pixelSize: 14
-                            }
-
-                            MouseArea {
-                                id: menu2ItemMouseArea
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                onClicked: {
-                                    currentSelected = model.itemId
-                                    console.log(model.name + "被点击")
-                                }
-                            }
-                        }
+                    onItemClicked: function(itemId, itemName) { //点击选项触发逻辑
+                        root.currentSelected = itemId
+                        console.log(itemName + "被点击")
                     }
                 }
             }
         }
     }
 
-    // 当前选中的子菜单（1或2）
-    property int currentMenu: 1
+    // 可复用的菜单内容组件
+    component MenuContent: Item {
+        id: menuContentRoot
+        property var menuData
+        property int currentSelected: 0
 
-    // 当前选中的子菜单项（1、2、3，0表示未选择）
-    property int currentSelected: 0
-    
-    // 获取子菜单标题的函数
-    function getMenuTitle(menuId) {
-        for (var i = 0; i < menuModel.count; i++) {
-            if (menuModel.get(i).menuId === menuId) {
-                return menuModel.get(i).name;
+        signal itemClicked(int itemId, string itemName)
+
+        Grid {
+            anchors.fill: parent
+            columns: menuData?.columns || 2
+            columnSpacing: 10
+            rowSpacing: 10
+
+            property real itemWidth: (width - columnSpacing * (columns - 1)) / columns
+
+            Repeater {
+                model: menuData?.items || []
+                delegate: MenuItem {
+                    width: parent.itemWidth
+                    height: menuData?.itemHeight || 80
+                    itemData: modelData
+                    isSelected: currentSelected === modelData.itemId
+
+                    onClicked: {
+                        // 信号触发
+                        menuContentRoot.itemClicked(modelData.itemId, modelData.name)
+                    }
+                }
             }
         }
-        return "菜单";
+    }
+
+    // 可复用的菜单项组件
+    component MenuItem: Rectangle {
+        property var itemData
+        property bool isSelected: false
+
+        signal clicked()
+
+        color: mouseArea.containsMouse ? themeColors.interactive.hover :
+               (isSelected ? themeColors.interactive.selected : themeColors.background.transparent)
+        radius: 5
+
+        Text {
+            anchors.centerIn: parent
+            text: itemData.name
+            color: themeColors.text.primary
+            font.pixelSize: 14
+        }
+
+        MouseArea {
+            id: mouseArea
+            anchors.fill: parent
+            hoverEnabled: true
+            onClicked: parent.clicked()
+        }
+    }
+
+    // 工具函数
+    function getCurrentMenuData() {
+        return menuConfig.find(menu => menu.menuId === expandedMenuId)
+    }
+
+    function handleMenuClick(menuId) {
+        if (expandedMenuId === menuId && expandMode === 1) {
+            expandedMenuId = 0
+            expandMode = 0
+            console.log("触发单击效果：半展开到收起")
+        } else if(expandedMenuId === 0 && expandMode === 0){
+            expandedMenuId = menuId
+            expandMode = 1
+            console.log("触发单击效果：收起到半展开")
+        } else if(expandedMenuId === menuId && expandMode === 2){
+            expandMode = 1
+            console.log("触发单击效果：全展开到半展开")
+        } else {
+            expandedMenuId = menuId
+            currentMenu = menuId
+        }
+    }
+
+    function handleMenuDoubleClick(menuId) {
+        if (expandedMenuId === menuId && expandMode === 2) {
+            console.log("触发双击效果：全展开到收起")
+            expandedMenuId = 0
+            expandMode = 0
+        } else {
+            expandedMenuId = menuId
+            expandMode = 2
+            console.log("触发双击效果：收起/半展开到全展开")
+        }
+        currentMenu = menuId
     }
 }
