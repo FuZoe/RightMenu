@@ -1,6 +1,6 @@
-QML官方也有实现侧边栏的组件[Drawer（抽屉）](https://doc.qt.io/qt-6/qml-qtquick-controls-drawer.html) ， 但它的局限性是默认会将其父级重设为窗口的 overlay 层。因此，当 Drawer 打开时，它会覆盖住界面上的所有其他元素。
+QML官方也有实现侧边栏的组件[Drawer（抽屉）](https://doc.qt.io/qt-6/qml-qtquick-controls-drawer.html) ， 但它的局限性是它无法支持菜单全展开、半展开两个状态。
 
-例如，如果我做一个“游戏 HUD”，Drawer 是菜单，但操作按钮必须留在游戏画面上。那么就会很麻烦。这个时候就要摒弃Drawer了。例如本项目就是一个很好的例子，使用了原始的实现。
+想要实现菜单栏的多状态，本项目就是一个很好的例子，使用了原始的实现。
 
 关键代码：
 
