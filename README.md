@@ -1,4 +1,4 @@
-QML官方也有实现侧边栏的组件[Drawer（抽屉）](https://doc.qt.io/qt-6/qml-qtquick-controls-drawer.html) ， 但它的局限性是它无法同时支持菜单全展开、半展开、收起三个稳定状态。
+QML官方也有实现侧边栏的组件[Drawer（抽屉）](https://doc.qt.io/qt-6/qml-qtquick-controls-drawer.html) 。
 <details>
 <summary>但它的局限性是它无法同时支持菜单全展开、半展开、收起三个稳定状态。 </summary>
      
