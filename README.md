@@ -15,7 +15,7 @@ QML官方也有实现侧边栏的组件[Drawer（抽屉）](https://doc.qt.io/qt
 
      width: expandedMenuId === 0 ? 0 : (expandMode === 1 ? 200 : mainWindw_wth - rightMenuBar.width)
 
-如果你还是想用Drawer（确实代码量更少），一个Drawer的使用示例：
+如果你还是想用Drawer（确实代码量更少），一个二态的Drawer的简单使用示例：
 
 
      import QtQuick
