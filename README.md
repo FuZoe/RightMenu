@@ -9,45 +9,39 @@ QML官方也有实现侧边栏的组件[Drawer（抽屉）](https://doc.qt.io/qt
 如果你还是想用Drawer（确实代码量更少），一个Drawer的使用示例：
 
 
-    import QtQuick
-    import QtQuick.Controls
-    
-    ApplicationWindow {
-        id: window
-        width: 640
-        height: 480
-        visible: true
-    
-        Drawer {
-            id: drawer
-            width: 200
-            height: parent.height
-            edge: Qt.LeftEdge
-    
-            // --- Drawer 的内容 ---
-            Column {
-                anchors.fill: parent
-                spacing: 20
-                padding: 20
-    
-                Label {
-                    text: "我是侧边栏内容"
-                    font.pixelSize: 16
-                }
-    
-                // 关闭按钮放在 Drawer 内部
-                Button {
-                    text: "关闭侧边栏"
-                    onClicked: drawer.close() // 点击关闭
-                }
-            }
-            // --- Drawer 内容结束 ---
-        }
-    
-        // 主界面的按钮，用于打开抽屉
-        Button {
-            text: "打开侧边栏"
-            onClicked: drawer.open()
-            anchors.centerIn: parent
-        }
-    }
+     import QtQuick
+     import QtQuick.Controls
+     
+     ApplicationWindow {
+         id: window
+         width: 640
+         height: 480
+         visible: true
+     
+         Drawer {
+             id: drawer
+             width: 200
+             height: parent.height
+             edge: Qt.LeftEdge
+             modal: false
+     
+             Label {
+                 text: "我是侧边栏内容"
+                 anchors.centerIn: parent
+             }
+         }
+     
+         Button {
+             text: "打开侧边栏"
+             onClicked: drawer.open() // 直接调用 open()
+             anchors.centerIn: parent
+             anchors.verticalCenterOffset: -30
+         }
+     
+         Button {
+             text: "关闭侧边栏"
+             onClicked: drawer.close() // 直接调用 close()
+             anchors.centerIn: parent
+             anchors.verticalCenterOffset: 30
+         }
+     }
